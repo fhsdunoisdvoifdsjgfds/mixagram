@@ -7,6 +7,8 @@ import 'dart:math' as math;
 import 'package:audioplayers/audioplayers.dart';
 import 'package:mixagram/game/MainScreen.dart';
 import 'package:mixagram/game/data.dart';
+import 'package:mixagram/settings/audio_play.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:async';
 
 import 'widgets/pause.dart';
@@ -26,32 +28,26 @@ class _StartGamePageState extends State<StartGamePage> {
   int hint = 1;
   int coins = 100;
   bool timeOut = false;
+  final AudioManager _audioManager = AudioManager();
   String currentWord = '';
   List<String> foundWords = [];
   final AudioPlayer successPlayer = AudioPlayer();
   final AudioPlayer failurePlayer = AudioPlayer();
   final AudioPlayer victoryPlayer = AudioPlayer();
   late Timer gameTimer;
-  int remainingSeconds = 100;
+  int remainingSeconds = 180;
   bool isPaused = false;
   bool isWin = false;
+  bool isSoundEnabled = true;
 
   @override
   void initState() {
     super.initState();
     availableLetters = levelLetters[widget.letters] ?? [];
     possibleWords = levelWords[widget.letters] ?? [];
+    loadSoundSettings();
     loadSounds();
     startTimer();
-  }
-
-  @override
-  void dispose() {
-    successPlayer.dispose();
-    failurePlayer.dispose();
-    victoryPlayer.dispose();
-    gameTimer.cancel();
-    super.dispose();
   }
 
   void loadSounds() async {
@@ -100,7 +96,7 @@ class _StartGamePageState extends State<StartGamePage> {
           coins = math.max(0, coins - 10);
 
           if (foundWords.length == 5) {
-            victoryPlayer.resume();
+            playVictorySound();
             setState(() {
               isWin = true;
             });
@@ -125,7 +121,7 @@ class _StartGamePageState extends State<StartGamePage> {
         final shuffledWords = List<String>.from(possibleWords)..shuffle();
         foundWords.addAll(shuffledWords.take(5));
         coins = math.max(0, coins - 60);
-        victoryPlayer.resume();
+        playVictorySound();
         setState(() {
           isWin = true;
         });
@@ -141,8 +137,27 @@ class _StartGamePageState extends State<StartGamePage> {
     }
   }
 
+  void playVictorySound() {
+    _audioManager.playSound('music/end_level.mp3');
+  }
+
+  void playSuccessSound() {
+    _audioManager.playSound('music/complete_word.mp3');
+  }
+
+  Future<void> loadSoundSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isSoundEnabled = prefs.getBool('isSound') ?? true;
+    });
+  }
+
+  void playFailureSound() {
+    _audioManager.playSound('music/time_out.mp3');
+  }
+
   void showTimeUpDialog() {
-    failurePlayer.resume();
+    playFailureSound();
     setState(() {
       coins = math.max(0, coins - 10);
       timeOut = true;
@@ -177,13 +192,13 @@ class _StartGamePageState extends State<StartGamePage> {
     if (currentWord.length == widget.letters) {
       if (possibleWords.contains(currentWord) &&
           !foundWords.contains(currentWord)) {
-        successPlayer.resume();
+        playSuccessSound();
         setState(() {
           foundWords.add(currentWord);
           currentWord = '';
           coins += 10;
           if (foundWords.length == 5) {
-            victoryPlayer.resume();
+            playVictorySound();
             showWinDialog();
           }
         });
@@ -209,7 +224,7 @@ class _StartGamePageState extends State<StartGamePage> {
       if (remainingWords.isNotEmpty) {
         setState(() {
           String wordToHint = remainingWords.first;
-          int lettersToShow = 1; // показываем только одну букву за раз
+          int lettersToShow = 1;
           if (currentWord.isEmpty) {
             currentWord = wordToHint.substring(0, lettersToShow);
           }
@@ -252,6 +267,15 @@ class _StartGamePageState extends State<StartGamePage> {
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    gameTimer.cancel();
+    successPlayer.dispose();
+    failurePlayer.dispose();
+    victoryPlayer.dispose();
+    super.dispose();
   }
 
   @override
@@ -351,14 +375,13 @@ class _StartGamePageState extends State<StartGamePage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Wrap(
                   alignment: WrapAlignment.center,
-                  spacing: 8, // расстояние между буквами
-                  runSpacing: 8, // расстояние между рядами
+                  spacing: 8,
+                  runSpacing: 8,
                   children: List.generate(widget.letters, (index) {
                     return GestureDetector(
                       onTap: () => onLetterTap(availableLetters[index]),
                       child: Container(
-                        width:
-                            45, // уменьшим размер для большего количества букв
+                        width: 45,
                         height: 45,
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -375,7 +398,7 @@ class _StartGamePageState extends State<StartGamePage> {
                           child: Text(
                             availableLetters[index],
                             style: GoogleFonts.baloo2(
-                              fontSize: 24, // уменьшим размер шрифта
+                              fontSize: 24,
                               fontWeight: FontWeight.bold,
                               color: Colors.black,
                             ),
@@ -666,7 +689,9 @@ class _StartGamePageState extends State<StartGamePage> {
           style: GoogleFonts.baloo2(
             fontSize: 25,
             fontWeight: FontWeight.bold,
-            color: index < foundWords.length ? const Color(0xFF343434) : Colors.grey,
+            color: index < foundWords.length
+                ? const Color(0xFF343434)
+                : Colors.grey,
           ),
         ),
       ),

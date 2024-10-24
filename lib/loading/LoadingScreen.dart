@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoadingScreen extends StatefulWidget {
   const LoadingScreen({super.key});
@@ -84,6 +85,20 @@ class _LoadingScreenState extends State<LoadingScreen> {
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 20),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: Text(
+                  'Loading...',
+                  style: GoogleFonts.baloo2(
+                    color: Colors.white,
+                    fontSize: 40,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            )
           ],
         ),
       ),

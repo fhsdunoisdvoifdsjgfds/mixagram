@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mixagram/aboutGame/AboutGameScreen.dart';
 import 'package:mixagram/game/BonusGameScreen.dart';
 import 'package:mixagram/game/ChooseGame.dart';
 import 'package:mixagram/settings/SettingsScreen.dart';
@@ -93,12 +94,19 @@ class _MainScreenGameState extends State<MainScreenGame> {
                   const SizedBox(
                     height: 20,
                   ),
-                  Container(
-                    height: MediaQuery.of(context).size.height * .08,
-                    width: MediaQuery.of(context).size.width * .4,
-                    decoration: const BoxDecoration(
-                      image: DecorationImage(
-                        image: AssetImage('assets/icons/btn_about.png'),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                        builder: (context) => const AboutGameScreen(),
+                      ));
+                    },
+                    child: Container(
+                      height: MediaQuery.of(context).size.height * .08,
+                      width: MediaQuery.of(context).size.width * .4,
+                      decoration: const BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage('assets/icons/btn_about.png'),
+                        ),
                       ),
                     ),
                   ),

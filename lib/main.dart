@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'game/MainScreen.dart';
 import 'loading/LoadingScreen.dart';
+import 'onboarding/OnBoardingScreen.dart';
+import 'settings/audio_play.dart'; // Импортируем экран онбординга
 
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
@@ -10,18 +12,18 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: InitializationScreen(),
+      home: LaunchScreen(),
     );
   }
 }
 
-class InitializationScreen extends StatefulWidget {
+class LaunchScreen extends StatefulWidget {
   @override
-  _InitializationScreenState createState() => _InitializationScreenState();
+  _LaunchScreenState createState() => _LaunchScreenState();
 }
 
-class _InitializationScreenState extends State<InitializationScreen> {
-  Future<void> checkFirstRun() async {
+class _LaunchScreenState extends State<LaunchScreen> {
+  Future<bool> checkFirstRun() async {
     final prefs = await SharedPreferences.getInstance();
     final isFirstRun = prefs.getBool('firstRun') ?? true;
 
@@ -29,30 +31,48 @@ class _InitializationScreenState extends State<InitializationScreen> {
       await prefs.setInt('coins', 250);
       await prefs.setBool('firstRun', false);
     }
+
+    final isOnboardingComplete = prefs.getBool('onboardingComplete') ?? false;
+    return isOnboardingComplete;
   }
 
   @override
   void initState() {
     super.initState();
-    checkFirstRun();
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String?>(
-      future: Future.delayed(const Duration(seconds: 0)),
+    return FutureBuilder<bool>(
+      future: checkFirstRun(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const LoadingScreen();
         } else {
-          return const MainScreenGame();
+          if (snapshot.hasData && !snapshot.data!) {
+            return OnBoardingScreen(
+              onComplete: () async {
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('onboardingComplete', true);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MainScreenGame(),
+                  ),
+                );
+              },
+            );
+          } else {
+            return const MainScreenGame();
+          }
         }
       },
     );
   }
 }
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AudioManager().initAudio();
   runApp(const MyApp());
 }
