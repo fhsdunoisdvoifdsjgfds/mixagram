@@ -11,6 +11,7 @@ dependencies:
   audioplayers:
   google_fonts:
   http: ^1.1.0
+  url_launcher: ^6.2.5
   shared_preferences: ^2.0.11
   cupertino_icons: ^1.0.8
 

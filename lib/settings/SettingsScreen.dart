@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import 'audio_play.dart';
 
@@ -235,7 +236,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 10),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () => launchURL(
+                          'https://medallmate.click/sweetmixagram-policy'),
                       child: Container(
                         height: 70,
                         width: 200,
@@ -244,7 +246,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 10),
                     GestureDetector(
-                      onTap: () {},
+                      onTap: () => launchURL(
+                          'https://medallmate.click/sweetmixagram-terms'),
                       child: Container(
                         height: 70,
                         width: 200,
@@ -259,5 +262,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> launchURL(String url) async {
+    if (await canLaunchUrl(Uri.parse(url))) {
+      await launchUrl(
+        Uri.parse(url),
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 }
